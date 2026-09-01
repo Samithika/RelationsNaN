@@ -51,6 +51,7 @@ namespace RelationsNaN.Controllers
         public IActionResult Create()
         {
             ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Name");
+            ViewData["Platforms"] = new SelectList(_context.Platform, "Id", "Name");
             return View();
         }
 
@@ -68,6 +69,7 @@ namespace RelationsNaN.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Name", game.GenreId);
+            ViewData["Platforms"] = new SelectList(_context.Platform, "Id", "Name");
             return View(game);
         }
 
@@ -85,8 +87,32 @@ namespace RelationsNaN.Controllers
                 return NotFound();
             }
             ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Name", game.GenreId);
+            ViewData["Platforms"] = new SelectList(_context.Platform, "Id", "Name");
             return View(game);
         }
+
+        // Add platform to game
+        [HttpPost]
+        public async Task<IActionResult> AddPlatform(int? id, Game game)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var platform = await _context.Platform.FindAsync(id);
+            if (platform == null)
+            {
+                return NotFound();
+            }
+            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Name", game.GenreId);
+            ViewData["Platforms"] = new SelectList(_context.Platform, "Id", "Name");
+
+            game.Platforms.Add(platform);
+            return View("Edit", game);
+        }
+
+        // remove platform from game
 
         // POST: Games/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -121,6 +147,7 @@ namespace RelationsNaN.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Name", game.GenreId);
+            ViewData["Platforms"] = new SelectList(_context.Platform, "Id", "Name");
             return View(game);
         }
 
