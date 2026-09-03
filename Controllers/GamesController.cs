@@ -1,12 +1,13 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
+using RelationsNaN.Data;
+using RelationsNaN.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using RelationsNaN.Data;
-using RelationsNaN.Models;
 
 namespace RelationsNaN.Controllers
 {
@@ -24,7 +25,7 @@ namespace RelationsNaN.Controllers
         // GET: Games
         public async Task<IActionResult> Index()
         {
-            var relationsNaNContext = _context.Game.Include(g => g.Genre);
+            var relationsNaNContext = _context.Game.Include(g => g.Genre).Include(g => g.Platforms);
             return View(await relationsNaNContext.ToListAsync());
         }
 
@@ -81,7 +82,7 @@ namespace RelationsNaN.Controllers
                 return NotFound();
             }
 
-            var game = await _context.Game.FindAsync(id);
+            var game = await _context.Game.Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
             if (game == null)
             {
                 return NotFound();
@@ -93,22 +94,28 @@ namespace RelationsNaN.Controllers
 
         // Add platform to game
         [HttpPost]
-        public async Task<IActionResult> AddPlatform(int? id, Game game)
+        public async Task<IActionResult> AddPlatform(int? id, int platformId)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var platform = await _context.Platform.FindAsync(id);
-            if (platform == null)
+            var game = await _context.Game.FindAsync(id);
+            var platform = await _context.Platform.FindAsync(platformId);
+            if (game == null || platform == null)
             {
                 return NotFound();
             }
-            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Name", game.GenreId);
-            ViewData["Platforms"] = new SelectList(_context.Platform, "Id", "Name");
 
-            game.Platforms.Add(platform);
+            if (!game.Platforms.Contains(platform))
+                game.Platforms.Add(platform);
+
+            await _context.SaveChangesAsync();
+
+            ViewData["GenreId"] = new SelectList(_context.Genre, "Id", "Name", game.GenreId);
+            ViewData["Platforms"] = new SelectList(await _context.Platform.Where(p => p.Id != platformId).ToListAsync(), "Id", "Name", platformId);
+
             return View("Edit", game);
         }
 
