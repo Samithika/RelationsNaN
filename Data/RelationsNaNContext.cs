@@ -26,5 +26,7 @@ namespace RelationsNaN.Data
 
         public DbSet<Platform> Platform { get; set; } = default!;
 
+        public DbSet<Purchase> Purchase { get; set; } = default!;
+        public DbSet<GamePurchase> GamePurchase { get; set; } = default!;
     }
 }
